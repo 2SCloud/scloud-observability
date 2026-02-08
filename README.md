@@ -14,7 +14,7 @@ background port-forwards**, and how to **send test data**.
 - Tempo: Traces backend (OTLP)  
 - Alloy: Collector (metrics, logs, traces)
 
-Namespace used throughout this guide: \`observability\`
+Namespace used throughout this guide: \`scloud-observability\`
 
 ---
 
@@ -22,7 +22,7 @@ Namespace used throughout this guide: \`observability\`
 
 Create the namespace (safe to run multiple times):
 
-`kubectl create namespace observability 2>/dev/null || true`
+`kubectl create namespace scloud-observability 2>/dev/null || true`
 
 ---
 
@@ -31,22 +31,22 @@ Create the namespace (safe to run multiple times):
 ### Grafana
 
 ```
-kubectl -n observability port-forward svc/grafana 3000:80 > /tmp/pf-grafana.log 2>&1 &
+kubectl -n scloud-observability port-forward svc/grafana 3000:80 > /tmp/pf-grafana.log 2>&1 &
 ```
 
 ### Loki
 ```
-kubectl -n observability port-forward svc/loki 3100:3100 > /tmp/pf-loki.log 2>&1 &
+kubectl -n scloud-observability port-forward svc/loki 3100:3100 > /tmp/pf-loki.log 2>&1 &
 ```
 
 ### Tempo
 ```
-kubectl -n observability port-forward svc/tempo 4318:4318 > /tmp/pf-tempo.log 2>&1 &
+kubectl -n scloud-observability port-forward svc/tempo 4318:4318 > /tmp/pf-tempo.log 2>&1 &
 ```
 
 ### Mimir
 ```
-kubectl -n observability port-forward svc/mimir-k3s-gateway 8080:80 > /tmp/pf-mimir.log 2>&1 &
+kubectl -n scloud-observability port-forward svc/mimir-k3s-gateway 8080:80 > /tmp/pf-mimir.log 2>&1 &
 ```
 
 Check background jobs:
@@ -69,9 +69,9 @@ Tempo:
 
 ## 4. Send Test Metric to Mimir
 ```
-kubectl -n observability delete pod promtool --force --grace-period=0 2>/dev/null || true
+kubectl -n scloud-observability delete pod promtool --force --grace-period=0 2>/dev/null || true
 
-kubectl -n observability run promtool \
+kubectl -n scloud-observability run promtool \
   --restart=Never \
   --image=prom/prometheus:v2.54.1 \
   -- sh -lc '
@@ -81,7 +81,7 @@ EOF2
 
 promtool tsdb create-blocks-from openmetrics /tmp/test.prom /tmp/tsdb
 promtool remote-write \
-  --url=http://mimir-k3s-gateway.observability.svc:80/api/v1/push \
+  --url=http://mimir-k3s-gateway.scloud-observability.svc:80/api/v1/push \
   /tmp/tsdb
 '
 ```
@@ -104,7 +104,7 @@ Explore → Prometheus → query: test_metric
 
 ## 7. Stop All Port-Forwards
 
-`pkill -f "kubectl -n observability port-forward"`
+`pkill -f "kubectl -n scloud-observability port-forward"`
 
 ---
 
