@@ -1,0 +1,95 @@
+fullnameOverride: mimir-k3s
+nameOverride: mimir
+
+minio:
+  enabled: false
+
+kafka:
+  enabled: false
+
+mimir:
+  structuredConfig:
+    multitenancy_enabled: false
+    no_auth_tenant: anonymous
+
+    ingest_storage:
+      enabled: false
+
+    ingester:
+      push_grpc_method_enabled: true
+      ring:
+        replication_factor: 1
+
+    common:
+      storage:
+        backend: filesystem
+        filesystem:
+          dir: /data
+
+    blocks_storage:
+      backend: filesystem
+      filesystem:
+        dir: /data/blocks
+      tsdb:
+        dir: /data/tsdb
+      bucket_store:
+        sync_dir: /data/tsdb-sync
+
+    compactor:
+      data_dir: /data/compactor
+
+gateway:
+  enabled: true
+  replicas: 1
+
+distributor:
+  replicas: 1
+
+ingester:
+  zoneAwareReplication:
+    enabled: false
+  replicas: 1
+  persistentVolume:
+    enabled: true
+    size: 10Gi
+    storageClass: local-path
+
+querier:
+  replicas: 1
+
+query_frontend:
+  replicas: 1
+
+query_scheduler:
+  enabled: true
+  replicas: 1
+
+store_gateway:
+  zoneAwareReplication:
+    enabled: false
+  replicas: 1
+  persistentVolume:
+    enabled: true
+    size: 10Gi
+    storageClass: local-path
+
+compactor:
+  replicas: 1
+  persistentVolume:
+    enabled: true
+    size: 10Gi
+    storageClass: local-path
+
+alertmanager:
+  enabled: false
+  zoneAwareReplication:
+    enabled: false
+
+ruler:
+  enabled: false
+
+overrides_exporter:
+  enabled: false
+
+serviceAccount:
+  create: true
