@@ -1,0 +1,73 @@
+controller:
+  type: daemonset
+
+serviceAccount:
+  create: true
+
+rbac:
+  create: true
+
+service:
+  enabled: true
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 12345
+      targetPort: 12345
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+
+alloy:
+  configMap:
+    create: true
+    content: |
+      discovery.kubernetes "pods" {
+        role = "pod"
+      }
+
+      discovery.kubernetes "nodes" {
+        role = "node"
+      }
+
+      prometheus.scrape "pods" {
+        targets         = discovery.kubernetes.pods.targets
+        forward_to      = [prometheus.remote_write.mimir.receiver]
+        scrape_interval = "30s"
+        honor_labels    = true
+      }
+
+      prometheus.remote_write "mimir" {
+        endpoint {
+          url = "http://mimir-k3s-gateway.observability.svc/api/v1/push"
+        }
+      }
+
+      loki.source.kubernetes "pods" {
+        targets    = discovery.kubernetes.pods.targets
+        forward_to = [loki.write.loki.receiver]
+      }
+
+      loki.write "loki" {
+        endpoint {
+          url = "http://loki.observability.svc:3100/loki/api/v1/push"
+        }
+      }
+
+      otelcol.receiver.otlp "otlp" {
+        grpc { endpoint = "0.0.0.0:4317" }
+        http { endpoint = "0.0.0.0:4318" }
+        output {
+          traces = [otelcol.exporter.otlp.tempo.input]
+        }
+      }
+
+      otelcol.exporter.otlp "tempo" {
+        client {
+          endpoint = "tempo.observability.svc:4317"
+          tls { insecure = true }
+        }
+      }
