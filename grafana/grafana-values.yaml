@@ -1,0 +1,40 @@
+adminUser: admin
+adminPassword: "admin"
+
+service:
+  type: ClusterIP
+
+persistence:
+  enabled: true
+  size: 5Gi
+  storageClassName: local-path
+
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://loki:3100
+        isDefault: false
+      - name: Tempo
+        type: tempo
+        access: proxy
+        url: http://tempo:3200
+        isDefault: false
+        jsonData:
+          tracesToLogsV2:
+            datasourceUid: loki
+      - name: Mimir
+        type: prometheus
+        access: proxy
+        url: http://mimir-query-frontend:8080/prometheus
+        isDefault: true
+
+# Option: expose via Traefik Ingress
+ingress:
+  enabled: true
+  ingressClassName: traefik
+  hosts:
+    - grafana.localcat lok  
