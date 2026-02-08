@@ -1,0 +1,23 @@
+tempo:
+  auth_enabled: false
+
+  metricsGenerator:
+    enabled: true
+
+tempoConfig:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+        http:
+  overrides:
+    metrics_generator_processors:
+      - local-blocks
+
+persistence:
+  enabled: true
+  size: 10Gi
+  storageClassName: local-path
+
+service:
+  type: ClusterIP
