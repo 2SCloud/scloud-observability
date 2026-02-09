@@ -22,6 +22,8 @@ service:
       targetPort: 4318
 
 alloy:
+  stabilityLevel: "generally-available"
+
   extraPorts:
     - name: otlp-grpc
       port: 4317
@@ -40,15 +42,10 @@ alloy:
         role = "pod"
       }
 
-      discovery.kubernetes "nodes" {
-        role = "node"
-      }
-
       prometheus.scrape "pods" {
         targets         = discovery.kubernetes.pods.targets
         forward_to      = [prometheus.remote_write.mimir.receiver]
         scrape_interval = "30s"
-        honor_labels    = true
       }
 
       prometheus.remote_write "mimir" {
@@ -57,9 +54,6 @@ alloy:
         }
       }
 
-      ### ======================
-      ### LOGS K8S → LOKI
-      ### ======================
       loki.source.kubernetes "pods" {
         targets    = discovery.kubernetes.pods.targets
         forward_to = [loki.write.loki.receiver]
@@ -76,19 +70,23 @@ alloy:
         http { endpoint = "0.0.0.0:4318" }
 
         output {
-          traces = [otelcol.processor.batch.main.input]
           logs   = [otelcol.processor.batch.main.input]
+          traces = [otelcol.processor.batch.main.input]
         }
       }
 
       otelcol.processor.batch "main" {
-        timeout          = "5s"
-        send_batch_size  = 1024
+        timeout         = "5s"
+        send_batch_size = 1024
 
         output {
+          logs   = [otelcol.exporter.loki.otlp.input]
           traces = [otelcol.exporter.otlp.tempo.input]
-          logs   = [loki.write.loki.receiver]
         }
+      }
+
+      otelcol.exporter.loki "otlp" {
+        forward_to = [loki.write.loki.receiver]
       }
 
       otelcol.exporter.otlp "tempo" {
