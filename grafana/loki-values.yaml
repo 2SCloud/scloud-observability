@@ -2,6 +2,7 @@ deploymentMode: SingleBinary
 
 loki:
   auth_enabled: false
+
   commonConfig:
     replication_factor: 1
 
@@ -18,6 +19,10 @@ loki:
   storage:
     type: filesystem
 
+# 🔥 IMPORTANT : désactive le Loki Canary (spam ppppppp)
+lokiCanary:
+  enabled: false
+
 singleBinary:
   replicas: 1
   persistence:
@@ -30,8 +35,10 @@ simpleScalable:
 
 backend:
   replicas: 0
+
 read:
   replicas: 0
+
 write:
   replicas: 0
 
