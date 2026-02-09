@@ -22,6 +22,8 @@ service:
       targetPort: 4318
 
 alloy:
+  stabilityLevel: "generally-available"
+
   extraPorts:
     - name: otlp-grpc
       port: 4317
@@ -32,6 +34,7 @@ alloy:
       port: 4318
       targetPort: 4318
       protocol: TCP
+
   configMap:
     create: true
     content: |
@@ -39,20 +42,15 @@ alloy:
         role = "pod"
       }
 
-      discovery.kubernetes "nodes" {
-        role = "node"
-      }
-
       prometheus.scrape "pods" {
         targets         = discovery.kubernetes.pods.targets
         forward_to      = [prometheus.remote_write.mimir.receiver]
         scrape_interval = "30s"
-        honor_labels    = true
       }
 
       prometheus.remote_write "mimir" {
         endpoint {
-          url = "http://mimir-k3s-gateway.observability.svc/api/v1/push"
+          url = "http://mimir-k3s-gateway.scloud-observability.svc/api/v1/push"
         }
       }
 
@@ -63,17 +61,7 @@ alloy:
 
       loki.write "loki" {
         endpoint {
-          url = "http://loki.observability.svc:3100/loki/api/v1/push"
-        }
-      }
-
-      otelcol.processor.batch "otel" {
-        timeout = "5s"
-        send_batch_size = 1024
-
-        output {
-          traces = [otelcol.exporter.otlp.tempo.input]
-          logs   = [otelcol.exporter.loki.otlp_logs.input]
+          url = "http://loki.scloud-observability.svc:3100/loki/api/v1/push"
         }
       }
 
@@ -82,18 +70,28 @@ alloy:
         http { endpoint = "0.0.0.0:4318" }
 
         output {
-          traces = [otelcol.processor.batch.otel.input]
-          logs   = [otelcol.processor.batch.otel.input]
+          logs   = [otelcol.processor.batch.main.input]
+          traces = [otelcol.processor.batch.main.input]
         }
+      }
+
+      otelcol.processor.batch "main" {
+        timeout         = "5s"
+        send_batch_size = 1024
+
+        output {
+          logs   = [otelcol.exporter.loki.otlp.input]
+          traces = [otelcol.exporter.otlp.tempo.input]
+        }
+      }
+
+      otelcol.exporter.loki "otlp" {
+        forward_to = [loki.write.loki.receiver]
       }
 
       otelcol.exporter.otlp "tempo" {
         client {
-          endpoint = "tempo.observability.svc:4317"
+          endpoint = "tempo.scloud-observability.svc:4317"
           tls { insecure = true }
         }
-      }
-
-      otelcol.exporter.loki "otlp_logs" {
-        forward_to = [loki.write.loki.receiver]
       }
