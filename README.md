@@ -158,7 +158,7 @@ kubectl -n scloud-observability port-forward svc/grafana 3000:80 > /tmp/pf-grafa
 kubectl -n scloud-observability port-forward svc/loki 3100:3100 > /tmp/pf-loki.log 2>&1 &
 kubectl -n scloud-observability port-forward svc/tempo 4318:4318 > /tmp/pf-tempo.log 2>&1 &
 kubectl -n scloud-observability port-forward svc/mimir-k3s-gateway 8080:80 > /tmp/pf-mimir.log 2>&1 &
-kubectl -n scloud-observability port-forward svc/alloy 12345:12345 > /tmp/pf-alloy.log 2>&1 &
+kubectl -n scloud-observability port-forward svc/alloy 14318:4318 > /tmp/pf-alloy.log 2>&1 &
 ```
 
 ---

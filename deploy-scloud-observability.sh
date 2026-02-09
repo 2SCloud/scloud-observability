@@ -98,7 +98,7 @@ echo "Tempo: http://localhost:4318"
 sudo kubectl -n ${NAMESPACE} port-forward svc/mimir-k3s-gateway 8080:80 > /tmp/pf-mimir.log 2>&1 &
 echo "Mimir: http://localhost:8080"
 
-sudo kubectl -n ${NAMESPACE} port-forward svc/alloy 12345:12345 > /tmp/pf-alloy.log 2>&1 &
+sudo kubectl -n ${NAMESPACE} port-forward svc/alloy 14318:4318 > /tmp/pf-alloy.log 2>&1 &
 echo "Alloy: http://localhost:12345"
 
 #Health checks
