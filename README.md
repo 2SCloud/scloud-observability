@@ -78,7 +78,7 @@ kubectl -n scloud-observability port-forward svc/mimir-k3s-gateway 8080:80 > /tm
 
 ### Alloy
 ```bash
-kubectl -n scloud-observability port-forward svc/alloy 8080:80 > /tmp/pf-alloy.log 2>&1 &
+kubectl -n scloud-observability port-forward svc/alloy 12345:12345 > /tmp/pf-alloy.log 2>&1 &
 ```
 
 Check background jobs:
