@@ -19,8 +19,10 @@ loki:
   storage:
     type: filesystem
 
-# 🔥 IMPORTANT : désactive le Loki Canary (spam ppppppp)
 lokiCanary:
+  enabled: false
+
+test:
   enabled: false
 
 singleBinary:
