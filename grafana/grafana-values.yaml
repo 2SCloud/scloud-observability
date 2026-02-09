@@ -37,4 +37,4 @@ ingress:
   enabled: true
   ingressClassName: traefik
   hosts:
-    - grafana.localcat lok  
+    - grafana.localcat

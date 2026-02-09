@@ -26,27 +26,59 @@ Create the namespace (safe to run multiple times):
 
 ---
 
-## 2. Start Port-Forwards (Background)
+## 2. Start/Apply each component
+
+```bash
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+
+helm upgrade --install grafana grafana/grafana \
+  -n scloud-observability -f grafana/grafana-values.yaml
+
+helm upgrade --install loki grafana/loki \
+  -n scloud-observability -f grafana/loki-values.yaml
+  # http://loki.scloud-observability.svc.cluster.local:3100/
+
+helm upgrade --install tempo grafana/tempo \
+  -n scloud-observability -f grafana/tempo-values.yaml
+
+helm upgrade --install mimir grafana/mimir-distributed \
+  -n scloud-observability -f grafana/mimir-values.yaml
+  # http://mimir-k3s-gateway.scloud-observability.svc:80/prometheus
+
+helm upgrade --install alloy grafana/alloy \
+  -n scloud-observability -f grafana/alloy-values.yaml
+
+```
+
+---
+
+## 3. Start Port-Forwards (Background)
 
 ### Grafana
 
-```
+```bash
 kubectl -n scloud-observability port-forward svc/grafana 3000:80 > /tmp/pf-grafana.log 2>&1 &
 ```
 
 ### Loki
-```
+```bash
 kubectl -n scloud-observability port-forward svc/loki 3100:3100 > /tmp/pf-loki.log 2>&1 &
 ```
 
 ### Tempo
-```
+```bash
 kubectl -n scloud-observability port-forward svc/tempo 4318:4318 > /tmp/pf-tempo.log 2>&1 &
 ```
 
 ### Mimir
-```
+```bash
 kubectl -n scloud-observability port-forward svc/mimir-k3s-gateway 8080:80 > /tmp/pf-mimir.log 2>&1 &
+```
+
+### Alloy
+```bash
+kubectl -n scloud-observability port-forward svc/alloy 8080:80 > /tmp/pf-alloy.log 2>&1 &
 ```
 
 Check background jobs:
@@ -68,7 +100,7 @@ Tempo:
 ---
 
 ## 4. Send Test Metric to Mimir
-```
+```bash
 kubectl -n scloud-observability delete pod promtool --force --grace-period=0 2>/dev/null || true
 
 kubectl -n scloud-observability run promtool \
@@ -88,7 +120,7 @@ promtool remote-write \
 ---
 
 ## 5. Verify Metric
-```
+```bash
 curl -G http://localhost:8080/prometheus/api/v1/query \
   --data-urlencode "query=test_metric"
   ```
