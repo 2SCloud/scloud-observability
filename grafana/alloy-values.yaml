@@ -32,6 +32,7 @@ alloy:
       port: 4318
       targetPort: 4318
       protocol: TCP
+
   configMap:
     create: true
     content: |
@@ -52,10 +53,13 @@ alloy:
 
       prometheus.remote_write "mimir" {
         endpoint {
-          url = "http://mimir-k3s-gateway.observability.svc/api/v1/push"
+          url = "http://mimir-k3s-gateway.scloud-observability.svc/api/v1/push"
         }
       }
 
+      ### ======================
+      ### LOGS K8S → LOKI
+      ### ======================
       loki.source.kubernetes "pods" {
         targets    = discovery.kubernetes.pods.targets
         forward_to = [loki.write.loki.receiver]
@@ -63,17 +67,7 @@ alloy:
 
       loki.write "loki" {
         endpoint {
-          url = "http://loki.observability.svc:3100/loki/api/v1/push"
-        }
-      }
-
-      otelcol.processor.batch "otel" {
-        timeout = "5s"
-        send_batch_size = 1024
-
-        output {
-          traces = [otelcol.exporter.otlp.tempo.input]
-          logs   = [otelcol.exporter.loki.otlp_logs.input]
+          url = "http://loki.scloud-observability.svc:3100/loki/api/v1/push"
         }
       }
 
@@ -82,18 +76,24 @@ alloy:
         http { endpoint = "0.0.0.0:4318" }
 
         output {
-          traces = [otelcol.processor.batch.otel.input]
-          logs   = [otelcol.processor.batch.otel.input]
+          traces = [otelcol.processor.batch.main.input]
+          logs   = [otelcol.processor.batch.main.input]
+        }
+      }
+
+      otelcol.processor.batch "main" {
+        timeout          = "5s"
+        send_batch_size  = 1024
+
+        output {
+          traces = [otelcol.exporter.otlp.tempo.input]
+          logs   = [loki.write.loki.receiver]
         }
       }
 
       otelcol.exporter.otlp "tempo" {
         client {
-          endpoint = "tempo.observability.svc:4317"
+          endpoint = "tempo.scloud-observability.svc:4317"
           tls { insecure = true }
         }
-      }
-
-      otelcol.exporter.loki "otlp_logs" {
-        forward_to = [loki.write.loki.receiver]
       }
