@@ -16,7 +16,7 @@ datasources:
       - name: Loki
         type: loki
         access: proxy
-        url: http://loki:3100
+        url: http://loki.scloud-observability.svc.cluster.local:3100/
         isDefault: false
       - name: Tempo
         type: tempo
@@ -29,7 +29,7 @@ datasources:
       - name: Mimir
         type: prometheus
         access: proxy
-        url: http://mimir-query-frontend:8080/prometheus
+        url: http://mimir-k3s-gateway.scloud-observability.svc:80/prometheus
         isDefault: true
 
 # Option: expose via Traefik Ingress
