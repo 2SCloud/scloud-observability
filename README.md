@@ -1,105 +1,90 @@
 # Grafana Observability Stack on k3s
 
-This README explains how to run and validate a **Grafana observability stack**
-(Grafana, Mimir, Loki, Tempo, Alloy) on **k3s**, with **all services exposed via
-background port-forwards**, and how to **send test data**.
+This README explains how to deploy and manage a **Grafana observability stack**
+(Grafana, Mimir, Loki, Tempo, Alloy) on **k3s** using automated deployment scripts.
 
 ---
 
 ## Components
 
-- Grafana: UI & dashboards  
-- Mimir: Metrics backend (Prometheus-compatible)  
-- Loki: Logs backend  
-- Tempo: Traces backend (OTLP)  
-- Alloy: Collector (metrics, logs, traces)
+- **Grafana**: UI & dashboards  
+- **Mimir**: Metrics backend (Prometheus-compatible)  
+- **Loki**: Logs backend  
+- **Tempo**: Traces backend (OTLP)  
+- **Alloy**: Collector (metrics, logs, traces)
 
-Namespace used throughout this guide: \`scloud-observability\`
-
----
-
-## 1. Namespace
-
-Create the namespace (safe to run multiple times):
-
-`kubectl create namespace scloud-observability 2>/dev/null || true`
+Namespace: `scloud-observability`
 
 ---
 
-## 2. Start/Apply each component
+## Quick Start (Scripts usages)
+
+### 1. Deploy the Stack
+
+Run the deployment script to install all components:
 
 ```bash
-helm repo add grafana https://grafana.github.io/helm-charts
-helm repo update
+./deploy-scloud-observability.sh
+```
 
-helm upgrade --install grafana grafana/grafana \
-  -n scloud-observability -f grafana/grafana-values.yaml
+This script will:
+- Create the `scloud-observability` namespace
+- Add and update Helm repositories
+- Deploy all components (Mimir, Loki, Tempo, Alloy, Grafana)
+- Wait for pods to be ready
+- Start port-forwards in background
+- Run health checks
 
-helm upgrade --install loki grafana/loki \
-  -n scloud-observability -f grafana/loki-values.yaml
-  # http://loki.scloud-observability.svc.cluster.local:3100/
+### 2. Clean Up
 
-helm upgrade --install tempo grafana/tempo \
-  -n scloud-observability -f grafana/tempo-values.yaml
+To completely remove the stack:
 
-helm upgrade --install mimir grafana/mimir-distributed \
-  -n scloud-observability -f grafana/mimir-values.yaml
-  # http://mimir-k3s-gateway.scloud-observability.svc:80/prometheus
+```bash
+./clean.sh
+```
 
-helm upgrade --install alloy grafana/alloy \
-  -n scloud-observability -f grafana/alloy-values.yaml
+This script will:
+- Stop all port-forwards
+- Uninstall all Helm releases
+- Delete the namespace
+- Clean up log files
+- Verify cleanup completion
 
+---
+
+## Access Points
+
+After deployment, services are accessible at:
+
+- **Grafana**: http://localhost:3000 (credentials: admin/admin)
+- **Mimir**: http://localhost:8080
+- **Loki**: http://localhost:3100
+- **Tempo**: http://localhost:4318
+- **Alloy**: http://localhost:12345
+
+---
+
+## Health Checks
+
+Verify services are running:
+
+```bash
+# Grafana
+curl http://localhost:3000/api/health
+
+# Mimir
+curl http://localhost:8080/prometheus/api/v1/status/buildinfo
+
+# Loki
+curl http://localhost:3100/ready
 ```
 
 ---
 
-## 3. Start Port-Forwards (Background)
+## Send Test Data
 
-### Grafana
+### Test Metric to Mimir
 
-```bash
-kubectl -n scloud-observability port-forward svc/grafana 3000:80 > /tmp/pf-grafana.log 2>&1 &
-```
-
-### Loki
-```bash
-kubectl -n scloud-observability port-forward svc/loki 3100:3100 > /tmp/pf-loki.log 2>&1 &
-```
-
-### Tempo
-```bash
-kubectl -n scloud-observability port-forward svc/tempo 4318:4318 > /tmp/pf-tempo.log 2>&1 &
-```
-
-### Mimir
-```bash
-kubectl -n scloud-observability port-forward svc/mimir-k3s-gateway 8080:80 > /tmp/pf-mimir.log 2>&1 &
-```
-
-### Alloy
-```bash
-kubectl -n scloud-observability port-forward svc/alloy 14318:4318 > /tmp/pf-alloy.log 2>&1 &
-```
-
-Check background jobs:
-jobs
-
----
-
-## 3. Health Checks
-
-Grafana:
-`curl http://localhost:3000/api/health`
-
-Mimir:
-`curl http://localhost:8080/prometheus/api/v1/status/buildinfo`
-
-Tempo:
-`curl http://localhost:4318/v1/traces`
-
----
-
-## 4. Send Test Metric to Mimir
 ```bash
 kubectl -n scloud-observability delete pod promtool --force --grace-period=0 2>/dev/null || true
 
@@ -117,34 +102,117 @@ promtool remote-write \
   /tmp/tsdb
 '
 ```
----
 
-## 5. Verify Metric
+### Verify Metric
+
 ```bash
 curl -G http://localhost:8080/prometheus/api/v1/query \
   --data-urlencode "query=test_metric"
-  ```
+```
+
+Or via Grafana UI:
+1. Open http://localhost:3000
+2. Navigate to Explore → Prometheus
+3. Query: `test_metric`
 
 ---
 
-## 6. Grafana UI
+## Manual Operations
 
-Open http://localhost:3000  
-Explore → Prometheus → query: test_metric
+### Stop Port-Forwards
+
+```bash
+pkill -f "kubectl -n scloud-observability port-forward"
+```
+
+### Manual Deployment (Step by Step)
+
+If you prefer manual control:
+
+```bash
+# Add Helm repos
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+
+# Create namespace
+kubectl create namespace scloud-observability 2>/dev/null || true
+
+# Deploy components
+helm upgrade --install mimir grafana/mimir-distributed \
+  -n scloud-observability -f grafana/mimir-values.yaml
+
+helm upgrade --install loki grafana/loki \
+  -n scloud-observability -f grafana/loki-values.yaml
+
+helm upgrade --install tempo grafana/tempo \
+  -n scloud-observability -f grafana/tempo-values.yaml
+
+helm upgrade --install alloy grafana/alloy \
+  -n scloud-observability -f grafana/alloy-values.yaml
+
+helm upgrade --install grafana grafana/grafana \
+  -n scloud-observability -f grafana/grafana-values.yaml
+
+# Start port-forwards
+kubectl -n scloud-observability port-forward svc/grafana 3000:80 > /tmp/pf-grafana.log 2>&1 &
+kubectl -n scloud-observability port-forward svc/loki 3100:3100 > /tmp/pf-loki.log 2>&1 &
+kubectl -n scloud-observability port-forward svc/tempo 4318:4318 > /tmp/pf-tempo.log 2>&1 &
+kubectl -n scloud-observability port-forward svc/mimir-k3s-gateway 8080:80 > /tmp/pf-mimir.log 2>&1 &
+kubectl -n scloud-observability port-forward svc/alloy 14318:4318 > /tmp/pf-alloy.log 2>&1 &
+```
 
 ---
 
-## 7. Stop All Port-Forwards
+## Troubleshooting
 
-`pkill -f "kubectl -n scloud-observability port-forward"`
+### Check Pod Status
+
+```bash
+kubectl -n scloud-observability get pods
+```
+
+### View Port-Forward Logs
+
+```bash
+tail -f /tmp/pf-grafana.log
+tail -f /tmp/pf-mimir.log
+tail -f /tmp/pf-loki.log
+tail -f /tmp/pf-tempo.log
+tail -f /tmp/pf-alloy.log
+```
+
+### Check Active Port-Forwards
+
+```bash
+ps aux | grep "kubectl.*port-forward.*scloud-observability"
+```
+
+### Cleanup Verification
+
+After running `clean.sh`, verify:
+- Namespace deleted: `kubectl get namespace scloud-observability`
+- No active port-forwards: `ps aux | grep port-forward`
+- Helm releases removed: `helm list -n scloud-observability`
+
+---
+
+## Configuration Files
+
+All configuration files are located in the `./grafana/` directory:
+- `grafana-values.yaml`
+- `mimir-values.yaml`
+- `loki-values.yaml`
+- `tempo-values.yaml`
+- `alloy-values.yaml`
 
 ---
 
 ## Expected State
 
-- Grafana UI accessible
-- Metrics visible
+After successful deployment:
+- Grafana UI accessible at http://localhost:3000
+- All health checks passing
+- Metrics queryable via Mimir
 - Mimir ring healthy
 - Loki & Tempo ready
-- Alloy collecting
-EOF
+- Alloy collecting telemetry data
