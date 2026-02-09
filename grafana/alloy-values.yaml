@@ -22,6 +22,16 @@ service:
       targetPort: 4318
 
 alloy:
+  extraPorts:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+      protocol: TCP
+      appProtocol: h2c
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+      protocol: TCP
   configMap:
     create: true
     content: |
@@ -57,11 +67,23 @@ alloy:
         }
       }
 
+      otelcol.processor.batch "otel" {
+        timeout = "5s"
+        send_batch_size = 1024
+
+        output {
+          traces = [otelcol.exporter.otlp.tempo.input]
+          logs   = [otelcol.exporter.loki.otlp_logs.input]
+        }
+      }
+
       otelcol.receiver.otlp "otlp" {
         grpc { endpoint = "0.0.0.0:4317" }
         http { endpoint = "0.0.0.0:4318" }
+
         output {
-          traces = [otelcol.exporter.otlp.tempo.input]
+          traces = [otelcol.processor.batch.otel.input]
+          logs   = [otelcol.processor.batch.otel.input]
         }
       }
 
@@ -70,4 +92,8 @@ alloy:
           endpoint = "tempo.observability.svc:4317"
           tls { insecure = true }
         }
+      }
+
+      otelcol.exporter.loki "otlp_logs" {
+        forward_to = [loki.write.loki.receiver]
       }
