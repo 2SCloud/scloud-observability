@@ -70,23 +70,85 @@ alloy:
         http { endpoint = "0.0.0.0:4318" }
 
         output {
-          logs   = [otelcol.processor.batch.main.input]
-          traces = [otelcol.processor.batch.main.input]
+          logs   = [otelcol.processor.attributes.loki_labels.input]
+          traces = [otelcol.processor.memory_limiter.mem.input]
         }
       }
 
-      otelcol.processor.batch "main" {
+      otelcol.processor.memory_limiter "mem" {
+        check_interval  = "1s"
+        limit_mib       = 512
+        spike_limit_mib = 256
+
+        output {
+          logs   = [otelcol.processor.batch.logs.input]
+          traces = [otelcol.processor.batch.traces.input]
+        }
+      }
+
+      otelcol.processor.attributes "loki_labels" {
+        action {
+          key            = "service_name"
+          from_attribute = "service.name"
+          action         = "upsert"
+        }
+
+        action {
+          key            = "service_instance"
+          from_attribute = "service.instance.id"
+          action         = "upsert"
+        }
+
+        action {
+          key    = "job"
+          value  = "dns"
+          action = "upsert"
+        }
+
+        action {
+          key            = "service_name"
+          from_attribute = "service.name"
+          action         = "upsert"
+        }
+
+        output {
+          logs = [otelcol.processor.memory_limiter.mem.input]
+        }
+      }
+
+      otelcol.processor.batch "logs" {
+        timeout         = "2s"
+        send_batch_size = 512
+
+        output {
+          logs = [otelcol.exporter.loki.otlp.input]
+        }
+      }
+
+      otelcol.processor.batch "traces" {
         timeout         = "5s"
         send_batch_size = 1024
 
         output {
-          logs   = [otelcol.exporter.loki.otlp.input]
           traces = [otelcol.exporter.otlp.tempo.input]
         }
       }
 
       otelcol.exporter.loki "otlp" {
         forward_to = [loki.write.loki.receiver]
+
+        queue {
+          enabled      = true
+          num_consumers = 4
+          queue_size    = 4096
+        }
+
+        retry_on_failure {
+          enabled          = true
+          initial_interval = "500ms"
+          max_interval     = "10s"
+          max_elapsed_time = "0s" # retry forever
+        }
       }
 
       otelcol.exporter.otlp "tempo" {
