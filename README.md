@@ -155,6 +155,8 @@ helm upgrade --install grafana grafana/grafana \
 
 # Start port-forwards
 kubectl -n scloud-observability port-forward svc/grafana 3000:80 > /tmp/pf-grafana.log 2>&1 &
+
+# You don't need thoses one below, only if something outside of the cluster need to interact with them
 kubectl -n scloud-observability port-forward svc/loki 3100:3100 > /tmp/pf-loki.log 2>&1 &
 kubectl -n scloud-observability port-forward svc/tempo 4318:4318 > /tmp/pf-tempo.log 2>&1 &
 kubectl -n scloud-observability port-forward svc/mimir-k3s-gateway 8080:80 > /tmp/pf-mimir.log 2>&1 &
