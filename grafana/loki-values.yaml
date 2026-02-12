@@ -19,6 +19,24 @@ loki:
   storage:
     type: filesystem
 
+  structuredConfig:
+    limits_config:
+      ingestion_rate_mb: 200
+      ingestion_burst_size_mb: 400
+
+      per_stream_rate_limit: 50MB
+      per_stream_rate_limit_burst: 100MB
+
+      max_entries_limit_per_query: 100000
+      max_query_parallelism: 32
+
+      max_global_streams_per_user: 100000
+      max_streams_per_user: 0
+
+    server:
+      http_listen_port: 3100
+      grpc_listen_port: 9095
+
 lokiCanary:
   enabled: false
 
@@ -31,6 +49,14 @@ singleBinary:
     enabled: true
     size: 20Gi
     storageClass: local-path
+
+  resources:
+    requests:
+      cpu: "2"
+      memory: "4Gi"
+    limits:
+      cpu: "6"
+      memory: "12Gi"
 
 simpleScalable:
   replicas: 0

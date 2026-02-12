@@ -71,17 +71,6 @@ alloy:
 
         output {
           logs   = [otelcol.processor.attributes.loki_labels.input]
-          traces = [otelcol.processor.memory_limiter.mem.input]
-        }
-      }
-
-      otelcol.processor.memory_limiter "mem" {
-        check_interval  = "1s"
-        limit_mib       = 512
-        spike_limit_mib = 256
-
-        output {
-          logs   = [otelcol.processor.batch.logs.input]
           traces = [otelcol.processor.batch.traces.input]
         }
       }
@@ -105,14 +94,8 @@ alloy:
           action = "upsert"
         }
 
-        action {
-          key            = "service_name"
-          from_attribute = "service.name"
-          action         = "upsert"
-        }
-
         output {
-          logs = [otelcol.processor.memory_limiter.mem.input]
+          logs = [otelcol.processor.batch.logs.input]
         }
       }
 
@@ -136,19 +119,6 @@ alloy:
 
       otelcol.exporter.loki "otlp" {
         forward_to = [loki.write.loki.receiver]
-
-        queue {
-          enabled      = true
-          num_consumers = 4
-          queue_size    = 4096
-        }
-
-        retry_on_failure {
-          enabled          = true
-          initial_interval = "500ms"
-          max_interval     = "10s"
-          max_elapsed_time = "0s" # retry forever
-        }
       }
 
       otelcol.exporter.otlp "tempo" {
@@ -157,3 +127,4 @@ alloy:
           tls { insecure = true }
         }
       }
+
