@@ -189,6 +189,28 @@ tail -f /tmp/pf-alloy.log
 ps aux | grep "kubectl.*port-forward.*scloud-observability"
 ```
 
+### Check `scloud-dns` Health
+
+If you need to restart the DNS:
+```bash
+kubectl -n scloud-dns rollout restart deployment/rust-dns
+```
+
+Start a new pod just for the test:
+```bash
+kubectl -n scloud-dns run dns-test \
+  --image=busybox:1.36 \
+  -it --rm -- sh
+```
+
+And inside the `busybox` make the command:
+```bash
+nslookup example.com rust-dns.scloud-dns.svc.cluster.local
+```
+
+After that you should see some logs about the DNS just started:
+<img width="959" height="424" alt="Image" src="https://github.com/user-attachments/assets/7c71b9e0-ca58-4388-b671-950ca07da8d1" />
+
 ### Cleanup Verification
 
 After running `clean.sh`, verify:
