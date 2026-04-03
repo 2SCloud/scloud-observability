@@ -35,10 +35,6 @@ helm repo update
 # grafana/mimir-distributed, grafana/loki... : Chart à utiliser (format repot/chart).
 # -n ${NAMESPACE} : Namespace définit.
 # -f ${VALUES_DIR}/mimir-values.yaml... : Fichier de configuration.
-echo "Déploiement de Mimir..."
-helm upgrade --install mimir grafana/mimir-distributed \
-  -n ${NAMESPACE} -f ${VALUES_DIR}/mimir-values.yaml
-
 echo "Déploiement de Loki..."
 helm upgrade --install loki grafana/loki \
   -n ${NAMESPACE} -f ${VALUES_DIR}/loki-values.yaml
@@ -62,10 +58,5 @@ helm upgrade --install grafana grafana/grafana \
 # pod : Type de ressource à surveiller.
 # -l app.kubernetes.io/name=grafana... : Selectionne les pods ayant ce label.
 # --timeout=300s : Timeout de 5 minutes.
-echo "Attente du démarrage des services..."
-sudo kubectl -n ${NAMESPACE} wait --for=condition=ready pod -l app.kubernetes.io/name=grafana --timeout=300s
-sudo kubectl -n ${NAMESPACE} wait --for=condition=ready pod -l app.kubernetes.io/name=loki --timeout=300s
-sudo kubectl -n ${NAMESPACE} wait --for=condition=ready pod -l app.kubernetes.io/name=tempo --timeout=300s
-
 echo ""
 echo "Stack scloud-observability déployée avec succès !"
