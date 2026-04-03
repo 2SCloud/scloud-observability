@@ -24,6 +24,14 @@ service:
 alloy:
   stabilityLevel: "generally-available"
 
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "300m"
+      memory: "256Mi"
+
   extraPorts:
     - name: otlp-grpc
       port: 4317

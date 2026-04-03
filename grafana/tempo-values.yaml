@@ -16,8 +16,16 @@ tempoConfig:
 
 persistence:
   enabled: true
-  size: 10Gi
+  size: 2Gi
   storageClassName: local-path
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "128Mi"
+  limits:
+    cpu: "300m"
+    memory: "256Mi"
 
 service:
   type: ClusterIP

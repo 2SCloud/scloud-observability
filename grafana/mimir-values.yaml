@@ -9,6 +9,7 @@ kafka:
 
 mimir:
   structuredConfig:
+    target: "all"   # monolithic — everything in one process
     multitenancy_enabled: false
     no_auth_tenant: anonymous
 
@@ -38,47 +39,30 @@ mimir:
     compactor:
       data_dir: /data/compactor
 
+# Disable all microservice components
 gateway:
-  enabled: true
-  replicas: 1
+  enabled: false
 
 distributor:
-  replicas: 1
+  replicas: 0
 
 ingester:
-  zoneAwareReplication:
-    enabled: false
-  replicas: 1
-  persistentVolume:
-    enabled: true
-    size: 10Gi
-    storageClass: local-path
+  replicas: 0
 
 querier:
-  replicas: 1
+  replicas: 0
 
 query_frontend:
-  replicas: 1
+  replicas: 0
 
 query_scheduler:
-  enabled: true
-  replicas: 1
+  enabled: false
 
 store_gateway:
-  zoneAwareReplication:
-    enabled: false
-  replicas: 1
-  persistentVolume:
-    enabled: true
-    size: 10Gi
-    storageClass: local-path
+  replicas: 0
 
 compactor:
-  replicas: 1
-  persistentVolume:
-    enabled: true
-    size: 10Gi
-    storageClass: local-path
+  replicas: 0
 
 alertmanager:
   enabled: false
@@ -90,6 +74,21 @@ ruler:
 
 overrides_exporter:
   enabled: false
+
+# Single monolithic pod
+mimir_monolithic:
+  replicas: 1
+  persistentVolume:
+    enabled: true
+    size: 6Gi
+    storageClass: local-path
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
 
 serviceAccount:
   create: true
