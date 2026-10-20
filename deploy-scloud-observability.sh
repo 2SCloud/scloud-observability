@@ -36,19 +36,19 @@ helm repo update
 # -n ${NAMESPACE} : Namespace définit.
 # -f ${VALUES_DIR}/mimir-values.yaml... : Fichier de configuration.
 echo "Déploiement de Loki..."
-helm upgrade --install loki grafana/loki \
+helm upgrade --install loki scloud-observability/grafana/loki \
   -n ${NAMESPACE} -f ${VALUES_DIR}/loki-values.yaml
 
 echo "Déploiement de Tempo..."
-helm upgrade --install tempo grafana/tempo \
+helm upgrade --install tempo scloud-observability/grafana/tempo \
   -n ${NAMESPACE} -f ${VALUES_DIR}/tempo-values.yaml
 
 echo "Déploiement d'Alloy..."
-helm upgrade --install alloy grafana/alloy \
+helm upgrade --install alloy scloud-observability/grafana/alloy \
   -n ${NAMESPACE} -f ${VALUES_DIR}/alloy-values.yaml
 
 echo "Déploiement de Grafana..."
-helm upgrade --install grafana grafana/grafana \
+helm upgrade --install grafana scloud-observability/grafana/grafana \
   -n ${NAMESPACE} -f ${VALUES_DIR}/grafana-values.yaml
 
 # Attendre que les pods soient prêts :
