@@ -18,8 +18,14 @@ echo "Déploiement de la stack Scloud-Observability sur k3s"
 # kubectl create namespace ${NAMESPACE} : Crée le namespace avec le nom adéquat.
 # 2>/dev/null : Redirige les erreurs (stderr) vers /dev/null.
 # echo "..." : Affiche un avertissement si la commande précedente échoue.
-echo "Création du namespace ${NAMESPACE}..."
-sudo kubectl create namespace ${NAMESPACE} 2>/dev/null || echo "⚠️  Namespace déjà existant"
+echo "Vérification du namespace ${NAMESPACE}..."
+
+if ! kubectl get namespace "${NAMESPACE}" >/dev/null 2>&1; then
+    echo "Création du namespace ${NAMESPACE}..."
+    kubectl create namespace "${NAMESPACE}"
+else
+    echo "✅ Namespace ${NAMESPACE} déjà existant"
+fi
 
 # Ajouter les repos Helm :
 # helm repo add grafana "..." : Ajoute un dépôt de charts Helm, ici le dépôt officiel de Grafana.
