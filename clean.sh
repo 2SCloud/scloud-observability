@@ -26,6 +26,9 @@ sleep 2
 echo "Suppression des releases Helm..."
 sudo helm uninstall -n ${NAMESPACE} grafana loki tempo mimir alloy 2>/dev/null || true
 
+echo "Suppression des pods..."
+kubectl delete pods --all -n scloud-observability
+
 # Supprimer le namespace :
 # kubectl delete namespace : Supprime le namespace et toutes ses ressources.
 # --timeout=60s : Timeout de 60 secondes pour éviter que le script reste bloqué si le namespace ne se supprime pas.
