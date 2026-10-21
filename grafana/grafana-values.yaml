@@ -2,8 +2,7 @@ adminUser: admin
 adminPassword: "admin"
 
 service:
-  type: NodePort
-  nodePort: 30300
+  type: ClusterIP
 
 persistence:
   enabled: true
@@ -21,13 +20,18 @@ resources:
 datasources:
   datasources.yaml:
     apiVersion: 1
+
     datasources:
+
       - name: Loki
+        uid: loki
         type: loki
         access: proxy
-        url: http://loki.scloud-observability.svc.cluster.local:3100/
+        url: http://loki.scloud-observability.svc.cluster.local:3100
         isDefault: false
+
       - name: Tempo
+        uid: tempo
         type: tempo
         access: proxy
         url: http://tempo:3200
@@ -35,15 +39,23 @@ datasources:
         jsonData:
           tracesToLogsV2:
             datasourceUid: loki
+
       - name: Mimir
+        uid: mimir
         type: prometheus
         access: proxy
         url: http://mimir.scloud-observability.svc:9009/prometheus
         isDefault: true
 
-# Option: expose via Traefik Ingress
 ingress:
   enabled: true
+
   ingressClassName: traefik
+
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+
   hosts:
-    - grafana.scloud.internal
+    - observability.scloud.moe
+
+  path: /
