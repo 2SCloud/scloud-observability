@@ -49,6 +49,10 @@ echo "Déploiement de Tempo..."
 helm upgrade --install tempo grafana/tempo \
   -n ${NAMESPACE} -f ${VALUES_DIR}/tempo-values.yaml
 
+echo "Déploiement de Mimir..."
+helm upgrade --install mimir grafana/mimir-distributed \
+  -n ${NAMESPACE} -f ${VALUES_DIR}/mimir-values.yaml
+
 echo "Déploiement d'Alloy..."
 helm upgrade --install alloy grafana/alloy \
   -n ${NAMESPACE} -f ${VALUES_DIR}/alloy-values.yaml
